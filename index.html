@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shutter Compare</title>
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #fff;
+            font-weight: 300;
+            font-size: 1.8rem;
+        }
+
+        .help-section {
+            background: #252525;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .help-section h3 {
+            color: #4a9eff;
+            margin-bottom: 12px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .help-section dl {
+            margin: 0 0 15px 0;
+        }
+
+        .help-section dt {
+            color: #e0e0e0;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        .help-section dd {
+            color: #999;
+            margin-left: 15px;
+            margin-top: 2px;
+        }
+
+        .help-section code {
+            background: #333;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #81c784;
+            font-family: monospace;
+        }
+
+        .help-section .formula {
+            background: #1a1a1a;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            color: #e0e0e0;
+        }
+
+        /* Drop Zone */
+        .drop-zone {
+            border: 2px dashed #555;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.dragover {
+            border-color: #4a9eff;
+            background: rgba(74, 158, 255, 0.1);
+        }
+
+        .drop-zone p {
+            color: #888;
+            margin-bottom: 10px;
+        }
+
+        .drop-zone .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #4a9eff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .drop-zone .btn:hover {
+            background: #3a8eef;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .file-count {
+            margin-top: 10px;
+            color: #4a9eff;
+            font-size: 14px;
+        }
+
+        /* Reference Image Section */
+        .reference-section {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .reference-section.visible {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            color: #aaa;
+            font-weight: 400;
+        }
+
+        .btn-clear {
+            padding: 6px 12px;
+            background: #333;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn-clear:hover {
+            background: #444;
+        }
+
+        .reference-container {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+            background: #222;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #reference-image {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            cursor: crosshair;
+        }
+
+        .selection-box {
+            position: absolute;
+            border: 2px solid #4a9eff;
+            background: rgba(74, 158, 255, 0.2);
+            pointer-events: none;
+            display: none;
+        }
+
+        .selection-box.active {
+            display: block;
+        }
+
+        .selection-box .region-label {
+            position: absolute;
+            top: -20px;
+            left: 0;
+            background: #4a9eff;
+            color: #fff;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 3px 3px 0 0;
+        }
+
+        .selection-box .region-delete {
+            position: absolute;
+            top: -20px;
+            right: 0;
+            background: #ff6b6b;
+            color: #fff;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 3px 3px 0 0;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+
+        .selection-box .region-delete:hover {
+            background: #ff4757;
+        }
+
+        /* Different colors for different regions */
+        .selection-box.region-1 { border-color: #4a9eff; background: rgba(74, 158, 255, 0.2); }
+        .selection-box.region-1 .region-label { background: #4a9eff; }
+        .selection-box.region-2 { border-color: #81c784; background: rgba(129, 199, 132, 0.2); }
+        .selection-box.region-2 .region-label { background: #81c784; }
+        .selection-box.region-3 { border-color: #ffb74d; background: rgba(255, 183, 77, 0.2); }
+        .selection-box.region-3 .region-label { background: #ffb74d; }
+        .selection-box.region-4 { border-color: #e57373; background: rgba(229, 115, 115, 0.2); }
+        .selection-box.region-4 .region-label { background: #e57373; }
+        .selection-box.region-5 { border-color: #ba68c8; background: rgba(186, 104, 200, 0.2); }
+        .selection-box.region-5 .region-label { background: #ba68c8; }
+
+        .selection-hint {
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        .common-exif {
+            display: none;
+            margin-top: 15px;
+            padding: 10px 15px;
+            background: #252525;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #888;
+        }
+
+        .common-exif.visible {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .common-exif .exif-value {
+            color: #e0e0e0;
+        }
+
+        .common-exif .exif-sep {
+            color: #555;
+            margin: 0 4px;
+        }
+
+        /* Zoom Controls */
+        .zoom-controls {
+            display: none;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #252525;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .zoom-controls.visible {
+            display: flex;
+        }
+
+        .zoom-label {
+            color: #888;
+            font-size: 13px;
+        }
+
+        .zoom-btn {
+            padding: 6px 12px;
+            background: #333;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .zoom-btn:hover,
+        .zoom-btn.active {
+            background: #4a9eff;
+            border-color: #4a9eff;
+        }
+
+        .zoom-slider {
+            flex: 1;
+            max-width: 200px;
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #444;
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .zoom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #4a9eff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .zoom-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #4a9eff;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        .zoom-value {
+            color: #4a9eff;
+            font-size: 13px;
+            min-width: 45px;
+            text-align: right;
+        }
+
+        /* Comparison List - Grid Layout */
+        .comparison-list {
+            display: none;
+        }
+
+        .comparison-list.visible {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(var(--cell-min-width, 400px), 1fr));
+            gap: 20px;
+        }
+
+        .comparison-item {
+            padding: 20px;
+            background: #252525;
+            border-radius: 8px;
+        }
+
+        .crop-container {
+            background: #1a1a1a;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .crop-container canvas {
+            display: block;
+        }
+
+        .crop-container .histogram {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 3px;
+            padding: 3px;
+        }
+
+        .crop-container .histogram canvas {
+            display: block;
+        }
+
+        /* Region indicator on crop */
+        .region-indicator {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .region-indicator.region-1 { background: #4a9eff; }
+        .region-indicator.region-2 { background: #81c784; }
+        .region-indicator.region-3 { background: #ffb74d; }
+        .region-indicator.region-4 { background: #e57373; }
+        .region-indicator.region-5 { background: #ba68c8; }
+
+        .image-info {
+            width: 100%;
+        }
+
+        .image-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .image-filename {
+            font-size: 13px;
+            color: #4a9eff;
+            word-break: break-all;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+        }
+
+        .hide-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 2px 6px;
+            font-size: 11px;
+            border-radius: 3px;
+            transition: all 0.2s;
+        }
+
+        .hide-btn:hover {
+            background: #333;
+            color: #ff6b6b;
+        }
+
+        .exif-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 4px 10px;
+            font-size: 12px;
+        }
+
+        .exif-label {
+            color: #666;
+        }
+
+        .exif-value {
+            color: #e0e0e0;
+        }
+
+        .ev-diff {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        .ev-diff.positive {
+            background: rgba(76, 175, 80, 0.2);
+            color: #81c784;
+        }
+
+        .ev-diff.negative {
+            background: rgba(244, 67, 54, 0.2);
+            color: #e57373;
+        }
+
+        .ev-diff.neutral {
+            background: rgba(158, 158, 158, 0.2);
+            color: #9e9e9e;
+        }
+
+        /* Loading Indicator */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .comparison-list.visible {
+                grid-template-columns: 1fr;
+            }
+
+            .zoom-controls {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Shutter Compare</h1>
+
+        <div class="help-section">
+            <h3>Exposure Triangle</h3>
+            <dl>
+                <dt>ISO (Sensitivity)</dt>
+                <dd>How sensitive the sensor is to light. Lower ISO (100) = less noise, darker. Higher ISO (3200) = more noise, brighter. Doubling ISO = +1 stop of light.</dd>
+
+                <dt>Aperture (f-stop)</dt>
+                <dd>Size of the lens opening. Lower f-number (f/1.8) = wider opening, more light, shallower depth of field. Higher f-number (f/16) = narrower opening, less light, deeper depth of field. Each full stop (f/1.4 → f/2 → f/2.8 → f/4 → f/5.6 → f/8 → f/11 → f/16) halves the light.</dd>
+
+                <dt>Shutter Speed</dt>
+                <dd>How long the sensor is exposed. Slower (1/30s) = more light, more motion blur. Faster (1/1000s) = less light, freezes motion. Doubling time = +1 stop of light.</dd>
+            </dl>
+
+            <h3>Exposure Value (EV)</h3>
+            <p>EV is a single number representing the total exposure. Each <strong>1 EV stop</strong> = doubling or halving the light.</p>
+
+            <div class="formula">EV = log₂(f² / shutter) - log₂(ISO / 100)</div>
+
+            <p>Examples of +1 EV (1 stop brighter):</p>
+            <dd>• ISO 100 → ISO 200</dd>
+            <dd>• f/2.8 → f/2</dd>
+            <dd>• 1/500s → 1/250s</dd>
+
+            <p style="margin-top: 12px;">In this app, <code>+1.00 EV</code> means the image is 1 stop brighter than the previous one.</p>
+
+            <h3>Histogram</h3>
+            <p>The histogram shows brightness distribution in the crop. Left = shadows (0), middle = midtones, right = highlights (255).</p>
+            <dd>• <strong>Left-heavy</strong> = underexposed (dark image)</dd>
+            <dd>• <strong>Right-heavy</strong> = overexposed (bright image, possible clipping)</dd>
+            <dd>• <strong>Spread across</strong> = good tonal range</dd>
+            <dd>• <strong>Clipped edges</strong> = lost detail in shadows (left) or highlights (right)</dd>
+
+            <p style="margin-top: 12px;"><strong>Why it's useful:</strong> Your eyes adapt to brightness, making it hard to judge exposure objectively. The histogram shows the actual data - you can see if highlights are blown out or shadows are crushed, even on a poorly calibrated monitor.</p>
+
+            <p style="margin-top: 8px;"><strong>Ideal histogram:</strong> There's no "perfect" shape - it depends on the scene. But generally:</p>
+            <dd>• Data should not pile up against left or right edges (clipping)</dd>
+            <dd>• For most scenes, a smooth curve touching neither edge is ideal</dd>
+            <dd>• High-key scenes (snow, bright sky) will naturally be right-heavy</dd>
+            <dd>• Low-key scenes (night, dark subjects) will naturally be left-heavy</dd>
+            <p style="margin-top: 8px;">Compare histograms across exposures to find the best balance - enough brightness without clipping highlights.</p>
+        </div>
+
+        <!-- Drop Zone -->
+        <div class="drop-zone" id="drop-zone">
+            <p>Drag & drop JPEG or CR2 images here, or</p>
+            <button class="btn" id="select-btn">Select Files</button>
+            <input type="file" id="file-input" multiple accept="image/jpeg,.jpg,.jpeg,.cr2,.CR2">
+            <div class="file-count" id="file-count"></div>
+        </div>
+
+        <!-- Reference Image Section -->
+        <div class="reference-section" id="reference-section">
+            <div class="section-header">
+                <span class="section-title">Reference Image - Draw selection region</span>
+                <button class="btn-clear" id="clear-selection">Clear Selection</button>
+            </div>
+            <div class="reference-container" id="reference-container">
+                <img id="reference-image" alt="Reference">
+                <!-- Selection boxes will be added dynamically -->
+            </div>
+            <p class="selection-hint">Click and drag to select regions to compare (up to 5 regions)</p>
+            <div class="common-exif" id="common-exif"></div>
+        </div>
+
+        <!-- Zoom Controls -->
+        <div class="zoom-controls" id="zoom-controls">
+            <span class="zoom-label">Zoom:</span>
+            <button class="zoom-btn" id="zoom-100">100%</button>
+            <input type="range" class="zoom-slider" id="zoom-slider" min="10" max="500" value="100">
+            <span class="zoom-value" id="zoom-value">100%</span>
+            <button class="zoom-btn" id="show-all-btn" style="display: none; margin-left: auto;">Show All</button>
+        </div>
+
+        <!-- Comparison List -->
+        <div class="comparison-list" id="comparison-list"></div>
+    </div>
+
+    <script>
+        // State
+        let images = []; // { file, url, exif, img }
+        let hiddenImages = new Set(); // Track hidden image indices
+        let selections = []; // Array of { x, y, width, height } in percentage
+        let zoomLevel = 100;
+        let isDrawing = false;
+        let startX, startY;
+        let currentSelectionBox = null; // Currently drawing selection box element
+        const MAX_REGIONS = 5;
+        const REGION_COLORS = ['#4a9eff', '#81c784', '#ffb74d', '#e57373', '#ba68c8'];
+
+        // DOM Elements
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const selectBtn = document.getElementById('select-btn');
+        const fileCount = document.getElementById('file-count');
+        const referenceSection = document.getElementById('reference-section');
+        const referenceContainer = document.getElementById('reference-container');
+        const referenceImage = document.getElementById('reference-image');
+        const clearSelectionBtn = document.getElementById('clear-selection');
+        const zoomControls = document.getElementById('zoom-controls');
+        const zoom100Btn = document.getElementById('zoom-100');
+        const zoomSlider = document.getElementById('zoom-slider');
+        const zoomValue = document.getElementById('zoom-value');
+        const comparisonList = document.getElementById('comparison-list');
+        const commonExifDiv = document.getElementById('common-exif');
+        const showAllBtn = document.getElementById('show-all-btn');
+
+        // File Loading
+        selectBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.click();
+        });
+
+        dropZone.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        async function handleFiles(files) {
+            const supportedFiles = Array.from(files).filter(f => {
+                const name = f.name.toLowerCase();
+                return f.type === 'image/jpeg' ||
+                       name.endsWith('.jpg') ||
+                       name.endsWith('.jpeg') ||
+                       name.endsWith('.cr2');
+            });
+
+            if (supportedFiles.length === 0) {
+                alert('Please select JPEG or CR2 images');
+                return;
+            }
+
+            // Sort by filename
+            supportedFiles.sort((a, b) => a.name.localeCompare(b.name));
+
+            fileCount.textContent = `Loading ${supportedFiles.length} image(s)...`;
+
+            // Reset state
+            images = [];
+            hiddenImages = new Set();
+            selections = [];
+            clearAllSelectionBoxes();
+            comparisonList.innerHTML = '';
+            comparisonList.classList.remove('visible');
+            zoomControls.classList.remove('visible');
+
+            // Load images and extract EXIF
+            let loadedCount = 0;
+            for (const file of supportedFiles) {
+                try {
+                    let url, exif;
+                    const isCR2 = file.name.toLowerCase().endsWith('.cr2');
+
+                    if (isCR2) {
+                        // Extract embedded JPEG from CR2
+                        const result = await extractCR2Preview(file);
+                        url = result.url;
+                        exif = result.exif;
+                    } else {
+                        url = URL.createObjectURL(file);
+                        exif = await extractExif(file);
+                    }
+
+                    const img = await loadImage(url);
+                    images.push({ file, url, exif, img });
+                    loadedCount++;
+                    fileCount.textContent = `Loading ${loadedCount}/${supportedFiles.length} image(s)...`;
+                } catch (err) {
+                    console.error('Failed to load:', file.name, err);
+                }
+            }
+
+            fileCount.textContent = `${images.length} image(s) loaded`;
+
+            // Show reference image (first one)
+            if (images.length > 0) {
+                referenceImage.src = images[0].url;
+                referenceSection.classList.add('visible');
+            }
+        }
+
+        function loadImage(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    console.log('Image loaded:', img.naturalWidth, 'x', img.naturalHeight);
+                    resolve(img);
+                };
+                img.onerror = (err) => {
+                    console.error('Image load error:', err);
+                    reject(err);
+                };
+                img.src = url;
+            });
+        }
+
+        // CR2 RAW file handling - extract embedded JPEG preview
+        async function extractCR2Preview(file) {
+            console.log('Processing CR2:', file.name, 'Size:', file.size);
+            const buffer = await file.arrayBuffer();
+            const data = new Uint8Array(buffer);
+
+            // Verify it's a valid TIFF/CR2 file
+            const isLittleEndian = data[0] === 0x49 && data[1] === 0x49;
+            const isBigEndian = data[0] === 0x4D && data[1] === 0x4D;
+            console.log('TIFF header:', isLittleEndian ? 'Little Endian' : (isBigEndian ? 'Big Endian' : 'Unknown'));
+
+            // Find the largest embedded JPEG in the CR2 file
+            // CR2 files contain multiple JPEG previews, we want the largest one
+            const jpegMarkers = findAllJPEGs(data);
+            console.log('Found JPEGs:', jpegMarkers.length, jpegMarkers.map(j => `offset:${j.start} size:${j.length}`));
+
+            if (jpegMarkers.length === 0) {
+                throw new Error('No JPEG preview found in CR2 file');
+            }
+
+            // Try each JPEG starting from largest, fall back to smaller ones if they fail
+            // Sort by size descending
+            jpegMarkers.sort((a, b) => b.length - a.length);
+
+            // Try to find a valid JPEG - sometimes the largest is lossless/compressed differently
+            let selectedJpeg = null;
+            for (const marker of jpegMarkers) {
+                // Verify it's a valid JPEG by checking for proper structure
+                const start = marker.start;
+                // Check for JFIF or Exif marker after SOI
+                if (start + 4 < data.length) {
+                    const marker2 = data[start + 2];
+                    const marker3 = data[start + 3];
+                    // FFE0 = JFIF, FFE1 = EXIF, FFDB = DQT, FFC0-FFC3 = SOF
+                    if (marker2 === 0xFF && (marker3 === 0xE0 || marker3 === 0xE1 || marker3 === 0xDB || (marker3 >= 0xC0 && marker3 <= 0xC3))) {
+                        selectedJpeg = marker;
+                        console.log('Selected JPEG at offset', marker.start, 'length', marker.length, 'marker:', marker3.toString(16));
+                        break;
+                    }
+                }
+            }
+
+            // If no valid JPEG found by structure, just use the second largest (usually the preview)
+            if (!selectedJpeg) {
+                // The largest is often lossless compressed, use the second one if available
+                selectedJpeg = jpegMarkers.length > 1 ? jpegMarkers[1] : jpegMarkers[0];
+                console.log('Fallback to JPEG at offset', selectedJpeg.start, 'length', selectedJpeg.length);
+            }
+
+            const largest = selectedJpeg;
+            console.log('Using JPEG at offset', largest.start, 'length', largest.length);
+
+            // Verify the JPEG data
+            const jpegData = data.slice(largest.start, largest.start + largest.length);
+            console.log('JPEG starts with:', jpegData[0].toString(16), jpegData[1].toString(16));
+            console.log('JPEG ends with:', jpegData[jpegData.length-2].toString(16), jpegData[jpegData.length-1].toString(16));
+
+            // Create blob URL for the extracted JPEG
+            const jpegBlob = new Blob([jpegData], { type: 'image/jpeg' });
+            const url = URL.createObjectURL(jpegBlob);
+
+            // Extract EXIF from the original CR2 file
+            const exif = await extractExifFromBuffer(data);
+
+            return { url, exif };
+        }
+
+        function findAllJPEGs(data) {
+            const jpegs = [];
+
+            // CR2 is TIFF-based - parse the TIFF structure to find the JPEG preview
+            // The preview is usually in IFD#3 (StripOffsets/StripByteCounts)
+            const littleEndian = data[0] === 0x49 && data[1] === 0x49;
+
+            function readUint16(offset) {
+                if (littleEndian) {
+                    return data[offset] | (data[offset + 1] << 8);
+                }
+                return (data[offset] << 8) | data[offset + 1];
+            }
+
+            function readUint32(offset) {
+                if (littleEndian) {
+                    return data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16) | ((data[offset + 3] << 24) >>> 0);
+                }
+                return ((data[offset] << 24) >>> 0) | (data[offset + 1] << 16) | (data[offset + 2] << 8) | data[offset + 3];
+            }
+
+            // Navigate through IFDs to find the largest image
+            let ifdOffset = readUint32(4);
+            let ifdIndex = 0;
+
+            while (ifdOffset > 0 && ifdOffset < data.length - 2 && ifdIndex < 10) {
+                const numEntries = readUint16(ifdOffset);
+                let stripOffset = 0;
+                let stripByteCount = 0;
+
+                for (let i = 0; i < numEntries; i++) {
+                    const entryOffset = ifdOffset + 2 + (i * 12);
+                    if (entryOffset + 12 > data.length) break;
+
+                    const tag = readUint16(entryOffset);
+                    const type = readUint16(entryOffset + 2);
+                    const count = readUint32(entryOffset + 4);
+
+                    // StripOffsets (0x0111) - where the image data starts
+                    if (tag === 0x0111) {
+                        if (count === 1 && (type === 3 || type === 4)) {
+                            stripOffset = type === 3 ? readUint16(entryOffset + 8) : readUint32(entryOffset + 8);
+                        } else {
+                            stripOffset = readUint32(entryOffset + 8);
+                        }
+                    }
+
+                    // StripByteCounts (0x0117) - size of the image data
+                    if (tag === 0x0117) {
+                        if (count === 1 && (type === 3 || type === 4)) {
+                            stripByteCount = type === 3 ? readUint16(entryOffset + 8) : readUint32(entryOffset + 8);
+                        } else {
+                            stripByteCount = readUint32(entryOffset + 8);
+                        }
+                    }
+                }
+
+                // Check if this strip looks like a JPEG (starts with FFD8)
+                if (stripOffset > 0 && stripByteCount > 100000 && stripOffset + 1 < data.length) {
+                    if (data[stripOffset] === 0xFF && data[stripOffset + 1] === 0xD8) {
+                        jpegs.push({ start: stripOffset, length: stripByteCount });
+                    }
+                }
+
+                // Move to next IFD
+                const nextIfdPointer = ifdOffset + 2 + (numEntries * 12);
+                if (nextIfdPointer + 4 > data.length) break;
+                ifdOffset = readUint32(nextIfdPointer);
+                ifdIndex++;
+            }
+
+            // Fallback: scan for JPEG markers if TIFF parsing didn't find any
+            if (jpegs.length === 0) {
+                let i = 0;
+                while (i < data.length - 1) {
+                    if (data[i] === 0xFF && data[i + 1] === 0xD8) {
+                        // Found JPEG start, look for end by scanning properly
+                        // Skip through JPEG segments until we find EOI
+                        let j = i + 2;
+                        let foundEnd = false;
+
+                        while (j < data.length - 1) {
+                            if (data[j] === 0xFF) {
+                                const marker = data[j + 1];
+                                if (marker === 0xD9) {
+                                    // EOI marker
+                                    const length = j - i + 2;
+                                    if (length > 100000) {
+                                        jpegs.push({ start: i, length });
+                                    }
+                                    i = j + 2;
+                                    foundEnd = true;
+                                    break;
+                                } else if (marker === 0xD8) {
+                                    // New SOI - nested JPEG, skip
+                                    j += 2;
+                                } else if (marker >= 0xD0 && marker <= 0xD7) {
+                                    // RST markers (no length)
+                                    j += 2;
+                                } else if (marker === 0x00 || marker === 0xFF) {
+                                    // Stuffed byte or padding
+                                    j++;
+                                } else {
+                                    // Segment with length
+                                    if (j + 3 < data.length) {
+                                        const segLen = (data[j + 2] << 8) | data[j + 3];
+                                        j += 2 + segLen;
+                                    } else {
+                                        break;
+                                    }
+                                }
+                            } else {
+                                j++;
+                            }
+                        }
+                        if (!foundEnd) break;
+                    } else {
+                        i++;
+                    }
+                }
+            }
+
+            return jpegs;
+        }
+
+        function extractExifFromBuffer(data) {
+            return new Promise((resolve) => {
+                // Find EXIF data in TIFF header (CR2 is TIFF-based)
+                // Look for the EXIF IFD
+                try {
+                    const exifData = parseExifFromTiff(data);
+                    resolve(exifData);
+                } catch (e) {
+                    console.error('EXIF parsing error:', e);
+                    resolve({
+                        aperture: 'N/A',
+                        shutterSpeed: 'N/A',
+                        iso: 'N/A',
+                        focalLength: 'N/A',
+                        exposureComp: 'N/A',
+                        camera: 'N/A'
+                    });
+                }
+            });
+        }
+
+        function parseExifFromTiff(data) {
+            // Check TIFF header
+            const littleEndian = data[0] === 0x49 && data[1] === 0x49; // 'II' = little endian
+
+            function readUint16(offset) {
+                if (littleEndian) {
+                    return data[offset] | (data[offset + 1] << 8);
+                }
+                return (data[offset] << 8) | data[offset + 1];
+            }
+
+            function readUint32(offset) {
+                if (littleEndian) {
+                    return data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16) | (data[offset + 3] << 24);
+                }
+                return (data[offset] << 24) | (data[offset + 1] << 16) | (data[offset + 2] << 8) | data[offset + 3];
+            }
+
+            function readRational(offset) {
+                const num = readUint32(offset);
+                const den = readUint32(offset + 4);
+                return den ? num / den : 0;
+            }
+
+            function readSRational(offset) {
+                let num = readUint32(offset);
+                let den = readUint32(offset + 4);
+                // Convert to signed
+                if (num > 0x7FFFFFFF) num -= 0x100000000;
+                if (den > 0x7FFFFFFF) den -= 0x100000000;
+                return den ? num / den : 0;
+            }
+
+            function readString(offset, length) {
+                let str = '';
+                for (let i = 0; i < length && data[offset + i] !== 0; i++) {
+                    str += String.fromCharCode(data[offset + i]);
+                }
+                return str.trim();
+            }
+
+            // Parse IFD entries
+            function parseIFD(offset, lookForExif = true) {
+                const result = {};
+                const numEntries = readUint16(offset);
+
+                for (let i = 0; i < numEntries; i++) {
+                    const entryOffset = offset + 2 + (i * 12);
+                    const tag = readUint16(entryOffset);
+                    const type = readUint16(entryOffset + 2);
+                    const count = readUint32(entryOffset + 4);
+                    let valueOffset = entryOffset + 8;
+
+                    // For values > 4 bytes, the offset points to the actual data
+                    const typeSize = [0, 1, 1, 2, 4, 8, 1, 1, 2, 4, 8, 4, 8][type] || 1;
+                    if (count * typeSize > 4) {
+                        valueOffset = readUint32(entryOffset + 8);
+                    }
+
+                    // EXIF IFD pointer
+                    if (tag === 0x8769 && lookForExif) {
+                        const exifOffset = readUint32(entryOffset + 8);
+                        Object.assign(result, parseIFD(exifOffset, false));
+                    }
+
+                    // Camera Model (0x0110)
+                    if (tag === 0x0110) {
+                        result.camera = readString(valueOffset, count);
+                    }
+
+                    // FNumber (0x829D)
+                    if (tag === 0x829D) {
+                        result.aperture = readRational(valueOffset);
+                    }
+
+                    // ExposureTime (0x829A)
+                    if (tag === 0x829A) {
+                        result.shutterSpeed = readRational(valueOffset);
+                    }
+
+                    // ISO (0x8827)
+                    if (tag === 0x8827) {
+                        result.iso = type === 3 ? readUint16(valueOffset) : readUint32(valueOffset);
+                    }
+
+                    // FocalLength (0x920A)
+                    if (tag === 0x920A) {
+                        result.focalLength = readRational(valueOffset);
+                    }
+
+                    // ExposureBias (0x9204)
+                    if (tag === 0x9204) {
+                        result.exposureComp = readSRational(valueOffset);
+                    }
+                }
+
+                return result;
+            }
+
+            // Start parsing from IFD0
+            const ifd0Offset = readUint32(4);
+            const parsed = parseIFD(ifd0Offset);
+
+            return {
+                aperture: parsed.aperture ? `f/${parsed.aperture.toFixed(1)}` : 'N/A',
+                shutterSpeed: formatShutterSpeed(parsed.shutterSpeed),
+                iso: parsed.iso ? `ISO ${parsed.iso}` : 'N/A',
+                focalLength: parsed.focalLength ? `${Math.round(parsed.focalLength)}mm` : 'N/A',
+                exposureComp: formatExposureComp(parsed.exposureComp),
+                camera: parsed.camera || 'N/A'
+            };
+        }
+
+        function extractExif(file) {
+            return new Promise((resolve) => {
+                EXIF.getData(file, function() {
+                    const aperture = EXIF.getTag(this, 'FNumber');
+                    const shutterSpeed = EXIF.getTag(this, 'ExposureTime');
+                    const iso = EXIF.getTag(this, 'ISOSpeedRatings');
+                    const focalLength = EXIF.getTag(this, 'FocalLength');
+                    const exposureComp = EXIF.getTag(this, 'ExposureBias');
+                    const camera = EXIF.getTag(this, 'Model');
+
+                    resolve({
+                        aperture: aperture ? `f/${aperture}` : 'N/A',
+                        shutterSpeed: formatShutterSpeed(shutterSpeed),
+                        iso: iso ? `ISO ${iso}` : 'N/A',
+                        focalLength: focalLength ? `${focalLength}mm` : 'N/A',
+                        exposureComp: formatExposureComp(exposureComp),
+                        camera: camera || 'N/A'
+                    });
+                });
+            });
+        }
+
+        function formatShutterSpeed(val) {
+            if (!val) return 'N/A';
+            if (val >= 1) return `${val}s`;
+            return `1/${Math.round(1/val)}s`;
+        }
+
+        function formatExposureComp(val) {
+            if (val === undefined || val === null) return 'N/A';
+            if (val === 0) return '0 EV';
+            const sign = val > 0 ? '+' : '';
+            return `${sign}${val.toFixed(1)} EV`;
+        }
+
+        // Rectangle Selection
+        let currentSelX, currentSelY, currentSelWidth, currentSelHeight;
+
+        function clearAllSelectionBoxes() {
+            const boxes = referenceContainer.querySelectorAll('.selection-box');
+            boxes.forEach(box => box.remove());
+        }
+
+        function createSelectionBox(index) {
+            const box = document.createElement('div');
+            box.className = `selection-box region-${index + 1} active`;
+            box.dataset.regionIndex = index;
+            box.innerHTML = `
+                <span class="region-label">Region ${index + 1}</span>
+                <span class="region-delete" data-index="${index}">×</span>
+            `;
+            referenceContainer.appendChild(box);
+
+            // Add delete handler
+            const deleteBtn = box.querySelector('.region-delete');
+            deleteBtn.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+            });
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteRegion(parseInt(e.target.dataset.index));
+            });
+
+            return box;
+        }
+
+        function deleteRegion(index) {
+            selections.splice(index, 1);
+            updateSelectionBoxes();
+            renderComparisons();
+        }
+
+        function updateSelectionBoxes() {
+            clearAllSelectionBoxes();
+            const rect = referenceImage.getBoundingClientRect();
+
+            selections.forEach((sel, index) => {
+                const box = createSelectionBox(index);
+                box.style.left = (sel.x * rect.width) + 'px';
+                box.style.top = (sel.y * rect.height) + 'px';
+                box.style.width = (sel.width * rect.width) + 'px';
+                box.style.height = (sel.height * rect.height) + 'px';
+            });
+        }
+
+        referenceContainer.addEventListener('mousedown', (e) => {
+            // Prevent default to avoid image dragging
+            e.preventDefault();
+
+            // Don't start new selection if max reached
+            if (selections.length >= MAX_REGIONS) {
+                return;
+            }
+
+            isDrawing = true;
+            const rect = referenceImage.getBoundingClientRect();
+            startX = e.clientX - rect.left;
+            startY = e.clientY - rect.top;
+
+            currentSelX = startX;
+            currentSelY = startY;
+            currentSelWidth = 0;
+            currentSelHeight = 0;
+
+            // Create new selection box for drawing
+            currentSelectionBox = createSelectionBox(selections.length);
+            currentSelectionBox.style.left = startX + 'px';
+            currentSelectionBox.style.top = startY + 'px';
+            currentSelectionBox.style.width = '0';
+            currentSelectionBox.style.height = '0';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDrawing || !currentSelectionBox) return;
+
+            const rect = referenceImage.getBoundingClientRect();
+            const currentX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+            const currentY = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
+
+            currentSelX = Math.min(startX, currentX);
+            currentSelY = Math.min(startY, currentY);
+            currentSelWidth = Math.abs(currentX - startX);
+            currentSelHeight = Math.abs(currentY - startY);
+
+            currentSelectionBox.style.left = currentSelX + 'px';
+            currentSelectionBox.style.top = currentSelY + 'px';
+            currentSelectionBox.style.width = currentSelWidth + 'px';
+            currentSelectionBox.style.height = currentSelHeight + 'px';
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            if (!isDrawing) return;
+            isDrawing = false;
+
+            const rect = referenceImage.getBoundingClientRect();
+
+            // Convert to percentages relative to image
+            const x = currentSelX / rect.width;
+            const y = currentSelY / rect.height;
+            const width = currentSelWidth / rect.width;
+            const height = currentSelHeight / rect.height;
+
+            console.log('Selection:', { x, y, width, height });
+
+            if (width > 0.01 && height > 0.01) { // Minimum selection size
+                selections.push({ x, y, width, height });
+                renderComparisons();
+            } else {
+                // Remove the temp selection box if too small
+                if (currentSelectionBox) {
+                    currentSelectionBox.remove();
+                }
+            }
+            currentSelectionBox = null;
+        });
+
+        clearSelectionBtn.addEventListener('click', () => {
+            selections = [];
+            clearAllSelectionBoxes();
+            comparisonList.innerHTML = '';
+            comparisonList.classList.remove('visible');
+            zoomControls.classList.remove('visible');
+            commonExifDiv.classList.remove('visible');
+        });
+
+        // Zoom Controls
+        zoom100Btn.addEventListener('click', () => {
+            zoomLevel = 100;
+            zoomSlider.value = 100;
+            zoomValue.textContent = '100%';
+            updateZoomButtons();
+            renderComparisons();
+        });
+
+        showAllBtn.addEventListener('click', () => {
+            hiddenImages.clear();
+            renderComparisons();
+        });
+
+        zoomSlider.addEventListener('input', () => {
+            zoomLevel = parseInt(zoomSlider.value);
+            zoomValue.textContent = `${zoomLevel}%`;
+            updateZoomButtons();
+            renderComparisons();
+        });
+
+        // Prevent page scrolling when using the zoom slider
+        zoomSlider.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+        }, { passive: true });
+
+        zoomSlider.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, { passive: false });
+
+        zoomSlider.addEventListener('wheel', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+
+        function updateZoomButtons() {
+            zoom100Btn.classList.toggle('active', zoomLevel === 100);
+        }
+
+        // EXIF field definitions
+        const exifFields = [
+            { key: 'aperture', label: 'Aperture' },
+            { key: 'shutterSpeed', label: 'Shutter' },
+            { key: 'iso', label: 'ISO' },
+            { key: 'focalLength', label: 'Focal' },
+            { key: 'exposureComp', label: 'Exp Comp' },
+            { key: 'camera', label: 'Camera' }
+        ];
+
+        // Track which EXIF fields differ across images
+        let differingFields = new Set();
+
+        // Calculate EV from EXIF data
+        // EV = log2(aperture^2 / shutter) - log2(ISO/100)
+        function calculateEV(exif) {
+            // Parse aperture (e.g., "f/2.8" -> 2.8)
+            let aperture = null;
+            if (exif.aperture && exif.aperture !== 'N/A') {
+                const match = exif.aperture.match(/f?\/?(\d+\.?\d*)/i);
+                if (match) aperture = parseFloat(match[1]);
+            }
+
+            // Parse shutter speed (e.g., "1/250" -> 0.004, "2"" -> 2)
+            let shutter = null;
+            if (exif.shutterSpeed && exif.shutterSpeed !== 'N/A') {
+                const str = exif.shutterSpeed.replace(/['"s]/g, '');
+                if (str.includes('/')) {
+                    const parts = str.split('/');
+                    shutter = parseFloat(parts[0]) / parseFloat(parts[1]);
+                } else {
+                    shutter = parseFloat(str);
+                }
+            }
+
+            // Parse ISO (e.g., "ISO 100" or "100" -> 100)
+            let iso = null;
+            if (exif.iso && exif.iso !== 'N/A') {
+                const match = exif.iso.toString().match(/(\d+)/);
+                if (match) iso = parseInt(match[1]);
+            }
+
+            if (aperture && shutter && iso) {
+                // EV at ISO 100 = log2(N^2/t)
+                // Adjusted for actual ISO: EV = log2(N^2/t) - log2(ISO/100)
+                const ev = Math.log2((aperture * aperture) / shutter) - Math.log2(iso / 100);
+                return ev;
+            }
+            return null;
+        }
+
+        // Render Comparisons
+        function renderComparisons() {
+            console.log('renderComparisons called', { selections, imagesCount: images.length });
+
+            // Get visible images (not hidden)
+            const visibleImages = images.filter((_, idx) => !hiddenImages.has(idx));
+
+            if (selections.length === 0 || visibleImages.length === 0) {
+                console.log('Skipping render - no selections or no visible images');
+                commonExifDiv.classList.remove('visible');
+                comparisonList.innerHTML = '';
+                comparisonList.classList.remove('visible');
+                zoomControls.classList.remove('visible');
+                return;
+            }
+
+            // Preserve scroll position during re-render
+            const scrollY = window.scrollY;
+
+            // Determine which EXIF fields are the same across all visible images
+            differingFields = new Set();
+            const firstExif = visibleImages[0].exif;
+
+            for (const field of exifFields) {
+                const firstValue = firstExif[field.key];
+                for (let i = 1; i < visibleImages.length; i++) {
+                    if (visibleImages[i].exif[field.key] !== firstValue) {
+                        differingFields.add(field.key);
+                        break;
+                    }
+                }
+            }
+
+            // Display common EXIF values below reference image (inline format)
+            const commonFields = exifFields.filter(f => !differingFields.has(f.key));
+            if (commonFields.length > 0) {
+                let commonHtml = '';
+                commonFields.forEach((field, idx) => {
+                    if (idx > 0) commonHtml += '<span class="exif-sep">|</span>';
+                    commonHtml += `<span class="exif-label">${field.label}:</span> <span class="exif-value">${firstExif[field.key]}</span>`;
+                });
+                commonExifDiv.innerHTML = commonHtml;
+                commonExifDiv.classList.add('visible');
+            } else {
+                commonExifDiv.classList.remove('visible');
+            }
+
+            comparisonList.innerHTML = '';
+            zoomControls.classList.add('visible');
+            comparisonList.classList.add('visible');
+
+            // Show/hide "Show All" button based on hidden images
+            showAllBtn.style.display = hiddenImages.size > 0 ? 'block' : 'none';
+
+            // Calculate actual crop size to determine columns dynamically (use widest selection)
+            if (selections.length > 0 && visibleImages.length > 0) {
+                const firstImg = visibleImages[0].img;
+
+                // Find the widest crop across all selections
+                let maxDisplayWidth = 0;
+                selections.forEach(sel => {
+                    const cropWidth = Math.round(sel.width * firstImg.naturalWidth);
+                    let displayWidth;
+                    if (zoomLevel === -1) {
+                        displayWidth = Math.min(400, cropWidth);
+                    } else {
+                        displayWidth = Math.round(cropWidth * (zoomLevel / 100));
+                    }
+                    maxDisplayWidth = Math.max(maxDisplayWidth, displayWidth);
+                });
+
+                // Add padding (20px * 2 = 40px) and some margin for the cell
+                const cellMinWidth = Math.max(200, maxDisplayWidth + 60);
+
+                // Set CSS variable for dynamic grid columns
+                comparisonList.style.setProperty('--cell-min-width', cellMinWidth + 'px');
+            }
+
+            // Render each image with all its regions in one cell
+            let prevEV = null;
+            images.forEach((imageData, idx) => {
+                if (hiddenImages.has(idx)) return;
+                const currentEV = calculateEV(imageData.exif);
+                const item = createComparisonItem(imageData, idx, prevEV, currentEV, selections);
+                comparisonList.appendChild(item);
+                if (currentEV !== null) prevEV = currentEV;
+            });
+
+            // Restore scroll position after re-render
+            window.scrollTo(0, scrollY);
+        }
+
+        // Create histogram from image data
+        function createHistogram(canvas, ctx) {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+
+            // Calculate luminosity histogram (256 bins)
+            const histogram = new Array(256).fill(0);
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                // Luminosity formula
+                const lum = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+                histogram[lum]++;
+            }
+
+            // Find max value for normalization
+            const maxVal = Math.max(...histogram);
+
+            // Create histogram canvas
+            const histCanvas = document.createElement('canvas');
+            const histWidth = 100;
+            const histHeight = 40;
+            histCanvas.width = histWidth;
+            histCanvas.height = histHeight;
+            const histCtx = histCanvas.getContext('2d');
+
+            // Draw histogram
+            histCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            const binWidth = histWidth / 256;
+            for (let i = 0; i < 256; i++) {
+                const barHeight = (histogram[i] / maxVal) * histHeight;
+                histCtx.fillRect(i * binWidth, histHeight - barHeight, Math.max(binWidth, 1), barHeight);
+            }
+
+            return histCanvas;
+        }
+
+        function createComparisonItem(imageData, imageIndex, prevEV, currentEV, selectionsArray) {
+            const { file, img, exif } = imageData;
+
+            // Build comparison item HTML
+            const item = document.createElement('div');
+            item.className = 'comparison-item';
+
+            // Create a crop for each selection region
+            selectionsArray.forEach((selection, regionIndex) => {
+                // Calculate crop dimensions in actual pixels
+                const cropX = Math.round(selection.x * img.naturalWidth);
+                const cropY = Math.round(selection.y * img.naturalHeight);
+                const cropWidth = Math.round(selection.width * img.naturalWidth);
+                const cropHeight = Math.round(selection.height * img.naturalHeight);
+
+                // Create canvas for cropped region
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                // Determine display size
+                let displayWidth, displayHeight;
+                if (zoomLevel === -1) {
+                    // Fit to container (max 400px width)
+                    const maxWidth = 400;
+                    const scale = Math.min(1, maxWidth / cropWidth);
+                    displayWidth = Math.round(cropWidth * scale);
+                    displayHeight = Math.round(cropHeight * scale);
+                } else {
+                    displayWidth = Math.round(cropWidth * (zoomLevel / 100));
+                    displayHeight = Math.round(cropHeight * (zoomLevel / 100));
+                }
+
+                canvas.width = displayWidth;
+                canvas.height = displayHeight;
+
+                ctx.drawImage(
+                    img,
+                    cropX, cropY, cropWidth, cropHeight,
+                    0, 0, displayWidth, displayHeight
+                );
+
+                // Create histogram overlay
+                const histCanvas = createHistogram(canvas, ctx);
+
+                const cropContainer = document.createElement('div');
+                cropContainer.className = 'crop-container';
+                cropContainer.appendChild(canvas);
+
+                // Add region label if multiple regions
+                if (selectionsArray.length > 1) {
+                    const regionLabel = document.createElement('div');
+                    regionLabel.className = 'region-indicator region-' + (regionIndex + 1);
+                    regionLabel.textContent = 'R' + (regionIndex + 1);
+                    cropContainer.appendChild(regionLabel);
+                }
+
+                // Add histogram overlay
+                const histDiv = document.createElement('div');
+                histDiv.className = 'histogram';
+                histDiv.appendChild(histCanvas);
+                cropContainer.appendChild(histDiv);
+
+                item.appendChild(cropContainer);
+            });
+
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'image-info';
+
+            // Build EXIF grid with only differing values
+            let exifHtml = '';
+            for (const field of exifFields) {
+                if (differingFields.has(field.key)) {
+                    exifHtml += `<span class="exif-label">${field.label}:</span><span class="exif-value">${exif[field.key]}</span>`;
+                }
+            }
+
+            // Calculate EV difference from previous visible image
+            // Lower EV = brighter image, so we invert for intuitive display (+ = brighter)
+            let evDiffHtml = '';
+            if (prevEV !== null && currentEV !== null) {
+                const evDiff = prevEV - currentEV; // Inverted: positive = brighter
+                const sign = evDiff > 0 ? '+' : '';
+                const evClass = evDiff > 0.01 ? 'positive' : (evDiff < -0.01 ? 'negative' : 'neutral');
+                evDiffHtml = `<span class="ev-diff ${evClass}">${sign}${evDiff.toFixed(2)} EV</span>`;
+            }
+
+            infoDiv.innerHTML = `
+                <div class="image-header">
+                    <span class="image-filename">${file.name}</span>${evDiffHtml}
+                    <button class="hide-btn" data-index="${imageIndex}">Hide</button>
+                </div>
+                ${exifHtml ? `<div class="exif-grid">${exifHtml}</div>` : ''}
+            `;
+
+            // Add hide button event listener
+            const hideBtn = infoDiv.querySelector('.hide-btn');
+            hideBtn.addEventListener('click', () => {
+                hiddenImages.add(imageIndex);
+                renderComparisons();
+            });
+
+            item.appendChild(infoDiv);
+
+            return item;
+        }
+
+        // Handle window resize - update selection boxes position
+        window.addEventListener('resize', () => {
+            if (selections.length > 0) {
+                updateSelectionBoxes();
+            }
+        });
+    </script>
+</body>
+</html>
