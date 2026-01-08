@@ -1429,15 +1429,18 @@
                 const rowLabel = document.createElement('div');
                 rowLabel.className = 'matrix-row-label';
 
-                // Find best label - prefer aperture, then shutter, then ISO
-                let labelText = imageData.exif.aperture;
+                // Build label from all differing fields
+                let labelParts = [];
                 if (differingFields.has('aperture')) {
-                    labelText = imageData.exif.aperture;
-                } else if (differingFields.has('shutterSpeed')) {
-                    labelText = imageData.exif.shutterSpeed;
-                } else if (differingFields.has('iso')) {
-                    labelText = imageData.exif.iso;
+                    labelParts.push(imageData.exif.aperture);
                 }
+                if (differingFields.has('shutterSpeed')) {
+                    labelParts.push(imageData.exif.shutterSpeed);
+                }
+                if (differingFields.has('iso')) {
+                    labelParts.push(imageData.exif.iso);
+                }
+                let labelText = labelParts.length > 0 ? labelParts.join(' ') : imageData.exif.aperture;
 
                 // Hide button (before label)
                 const hideBtn = document.createElement('button');
