@@ -1429,7 +1429,7 @@
                 const rowLabel = document.createElement('div');
                 rowLabel.className = 'matrix-row-label';
 
-                // Build label from all differing fields
+                // Build label from all differing fields - each on its own line
                 let labelParts = [];
                 if (differingFields.has('aperture')) {
                     labelParts.push(imageData.exif.aperture);
@@ -1440,9 +1440,19 @@
                 if (differingFields.has('iso')) {
                     labelParts.push(imageData.exif.iso);
                 }
-                let labelText = labelParts.length > 0 ? labelParts.join(' ') : imageData.exif.aperture;
+                if (labelParts.length === 0) {
+                    labelParts.push(imageData.exif.aperture);
+                }
 
-                // Hide button (before label)
+                // Add each parameter on its own line
+                labelParts.forEach(part => {
+                    const labelLine = document.createElement('div');
+                    labelLine.className = 'row-label-text';
+                    labelLine.textContent = part;
+                    rowLabel.appendChild(labelLine);
+                });
+
+                // Hide button (on its own line at the end)
                 const hideBtn = document.createElement('button');
                 hideBtn.className = 'row-hide-btn';
                 hideBtn.textContent = '×';
@@ -1452,11 +1462,6 @@
                     renderComparisons();
                 });
                 rowLabel.appendChild(hideBtn);
-
-                const labelSpan = document.createElement('span');
-                labelSpan.className = 'row-label-text';
-                labelSpan.textContent = labelText;
-                rowLabel.appendChild(labelSpan);
 
                 row.appendChild(rowLabel);
 
