@@ -21,12 +21,11 @@
 
         .container {
             max-width: 1200px;
-            margin: 0 auto;
             padding: 20px;
         }
 
         h1 {
-            text-align: center;
+            text-align: left;
             margin-bottom: 10px;
             color: #fff;
             font-weight: 300;
@@ -241,21 +240,34 @@
             margin-top: 8px;
         }
 
-        .common-exif {
+        /* Controls Bar (combined EXIF info + zoom + bg color) */
+        .controls-bar {
             display: none;
-            margin-top: 15px;
-            padding: 10px 15px;
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px;
             background: #252525;
             border-radius: 8px;
+            margin-bottom: 20px;
             font-size: 13px;
-            color: #888;
         }
 
-        .common-exif.visible {
+        .controls-bar.visible {
+            display: flex;
+        }
+
+        .controls-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .common-exif {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
             gap: 6px;
+            color: #888;
         }
 
         .common-exif .exif-value {
@@ -265,21 +277,6 @@
         .common-exif .exif-sep {
             color: #555;
             margin: 0 4px;
-        }
-
-        /* Zoom Controls */
-        .zoom-controls {
-            display: none;
-            align-items: center;
-            gap: 15px;
-            padding: 15px;
-            background: #252525;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .zoom-controls.visible {
-            display: flex;
         }
 
         .zoom-label {
@@ -340,27 +337,111 @@
             text-align: right;
         }
 
-        /* Comparison List - Grid Layout */
+        .bg-color-picker {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bg-color-picker label {
+            color: #888;
+        }
+
+        .bg-color-picker input[type="color"] {
+            width: 30px;
+            height: 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+        }
+
+        .bg-color-picker input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        .bg-color-picker input[type="color"]::-webkit-color-swatch {
+            border: 1px solid #555;
+            border-radius: 4px;
+        }
+
+        /* Comparison List - Matrix Layout */
         .comparison-list {
             display: none;
         }
 
         .comparison-list.visible {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(var(--cell-min-width, 400px), 1fr));
-            gap: 20px;
+            display: block;
+            padding: 10px 20px;
+            margin-left: 20px;
+            width: fit-content;
         }
 
-        .comparison-item {
-            padding: 20px;
-            background: #252525;
-            border-radius: 8px;
+        .comparison-matrix {
+            display: grid;
+            gap: 5px;
+            width: fit-content;
+        }
+
+        .matrix-header {
+            display: contents;
+        }
+
+        .matrix-header-cell {
+            text-align: center;
+            font-size: 18px;
+            color: #888;
+            padding: 5px 5px;
+            font-weight: 500;
+        }
+
+        .matrix-row {
+            display: contents;
+        }
+
+        .matrix-row-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            font-size: 18px;
+            font-weight: 500;
+            color: #4a9eff;
+            padding: 0 10px;
+            gap: 4px;
+        }
+
+        .row-label-text {
+            white-space: nowrap;
+        }
+
+        .row-hide-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        .row-hide-btn:hover {
+            background: #333;
+            color: #ff6b6b;
+        }
+
+        .matrix-cell {
+            background: transparent;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .crop-container {
             background: #1a1a1a;
             border-radius: 4px;
-            margin-bottom: 12px;
             position: relative;
         }
 
@@ -379,61 +460,6 @@
 
         .crop-container .histogram canvas {
             display: block;
-        }
-
-        /* Region indicator on crop */
-        .region-indicator {
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 10px;
-            font-weight: 600;
-            color: #fff;
-        }
-
-        .region-indicator.region-1 { background: #4a9eff; }
-        .region-indicator.region-2 { background: #81c784; }
-        .region-indicator.region-3 { background: #ffb74d; }
-        .region-indicator.region-4 { background: #e57373; }
-        .region-indicator.region-5 { background: #ba68c8; }
-
-        .image-info {
-            width: 100%;
-        }
-
-        .image-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-
-        .image-filename {
-            font-size: 13px;
-            color: #4a9eff;
-            word-break: break-all;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            flex: 1;
-        }
-
-        .hide-btn {
-            background: none;
-            border: none;
-            color: #666;
-            cursor: pointer;
-            padding: 2px 6px;
-            font-size: 11px;
-            border-radius: 3px;
-            transition: all 0.2s;
-        }
-
-        .hide-btn:hover {
-            background: #333;
-            color: #ff6b6b;
         }
 
         .exif-grid {
@@ -559,21 +585,32 @@
                 <!-- Selection boxes will be added dynamically -->
             </div>
             <p class="selection-hint">Click and drag to select regions to compare (up to 5 regions)</p>
-            <div class="common-exif" id="common-exif"></div>
         </div>
 
-        <!-- Zoom Controls -->
-        <div class="zoom-controls" id="zoom-controls">
-            <span class="zoom-label">Zoom:</span>
-            <button class="zoom-btn" id="zoom-100">100%</button>
-            <input type="range" class="zoom-slider" id="zoom-slider" min="10" max="500" value="100">
-            <span class="zoom-value" id="zoom-value">100%</span>
-            <button class="zoom-btn" id="show-all-btn" style="display: none; margin-left: auto;">Show All</button>
+        <!-- Controls Bar (EXIF + Zoom + Background Color) -->
+        <div class="controls-bar" id="controls-bar">
+            <div class="controls-row" id="exif-row">
+                <div class="common-exif" id="common-exif"></div>
+            </div>
+            <div class="controls-row">
+                <span class="zoom-label">Zoom:</span>
+                <button class="zoom-btn" id="zoom-100">100%</button>
+                <input type="range" class="zoom-slider" id="zoom-slider" min="10" max="500" value="100">
+                <span class="zoom-value" id="zoom-value">100%</span>
+                <button class="zoom-btn" id="show-all-btn" style="display: none; margin-left: auto;">Show All</button>
+            </div>
+            <div class="controls-row">
+                <div class="bg-color-picker">
+                    <label>Background:</label>
+                    <input type="color" id="bg-color" value="#1a1a1a">
+                </div>
+            </div>
         </div>
 
-        <!-- Comparison List -->
-        <div class="comparison-list" id="comparison-list"></div>
     </div>
+
+    <!-- Comparison List - outside container for full width -->
+    <div class="comparison-list" id="comparison-list"></div>
 
     <script>
         // State
@@ -596,13 +633,15 @@
         const referenceContainer = document.getElementById('reference-container');
         const referenceImage = document.getElementById('reference-image');
         const clearSelectionBtn = document.getElementById('clear-selection');
-        const zoomControls = document.getElementById('zoom-controls');
+        const controlsBar = document.getElementById('controls-bar');
         const zoom100Btn = document.getElementById('zoom-100');
         const zoomSlider = document.getElementById('zoom-slider');
         const zoomValue = document.getElementById('zoom-value');
         const comparisonList = document.getElementById('comparison-list');
         const commonExifDiv = document.getElementById('common-exif');
+        const exifRow = document.getElementById('exif-row');
         const showAllBtn = document.getElementById('show-all-btn');
+        const bgColorPicker = document.getElementById('bg-color');
 
         // File Loading
         selectBtn.addEventListener('click', (e) => {
@@ -659,7 +698,7 @@
             clearAllSelectionBoxes();
             comparisonList.innerHTML = '';
             comparisonList.classList.remove('visible');
-            zoomControls.classList.remove('visible');
+            controlsBar.classList.remove('visible');
 
             // Load images and extract EXIF
             let loadedCount = 0;
@@ -1199,7 +1238,7 @@
             clearAllSelectionBoxes();
             comparisonList.innerHTML = '';
             comparisonList.classList.remove('visible');
-            zoomControls.classList.remove('visible');
+            controlsBar.classList.remove('visible');
             commonExifDiv.classList.remove('visible');
         });
 
@@ -1237,6 +1276,11 @@
         zoomSlider.addEventListener('wheel', (e) => {
             e.preventDefault();
         }, { passive: false });
+
+        // Background color picker
+        bgColorPicker.addEventListener('input', () => {
+            comparisonList.style.backgroundColor = bgColorPicker.value;
+        });
 
         function updateZoomButtons() {
             zoom100Btn.classList.toggle('active', zoomLevel === 100);
@@ -1302,10 +1346,10 @@
 
             if (selections.length === 0 || visibleImages.length === 0) {
                 console.log('Skipping render - no selections or no visible images');
-                commonExifDiv.classList.remove('visible');
+                exifRow.style.display = 'none';
                 comparisonList.innerHTML = '';
                 comparisonList.classList.remove('visible');
-                zoomControls.classList.remove('visible');
+                controlsBar.classList.remove('visible');
                 return;
             }
 
@@ -1326,7 +1370,7 @@
                 }
             }
 
-            // Display common EXIF values below reference image (inline format)
+            // Display common EXIF values in controls bar (inline format)
             const commonFields = exifFields.filter(f => !differingFields.has(f.key));
             if (commonFields.length > 0) {
                 let commonHtml = '';
@@ -1335,51 +1379,95 @@
                     commonHtml += `<span class="exif-label">${field.label}:</span> <span class="exif-value">${firstExif[field.key]}</span>`;
                 });
                 commonExifDiv.innerHTML = commonHtml;
-                commonExifDiv.classList.add('visible');
+                exifRow.style.display = 'flex';
             } else {
-                commonExifDiv.classList.remove('visible');
+                exifRow.style.display = 'none';
             }
 
             comparisonList.innerHTML = '';
-            zoomControls.classList.add('visible');
+            controlsBar.classList.add('visible');
             comparisonList.classList.add('visible');
 
             // Show/hide "Show All" button based on hidden images
             showAllBtn.style.display = hiddenImages.size > 0 ? 'block' : 'none';
 
-            // Calculate actual crop size to determine columns dynamically (use widest selection)
-            if (selections.length > 0 && visibleImages.length > 0) {
-                const firstImg = visibleImages[0].img;
+            // Create matrix layout: rows = images, columns = regions
+            const matrix = document.createElement('div');
+            matrix.className = 'comparison-matrix';
 
-                // Find the widest crop across all selections
-                let maxDisplayWidth = 0;
-                selections.forEach(sel => {
-                    const cropWidth = Math.round(sel.width * firstImg.naturalWidth);
-                    let displayWidth;
-                    if (zoomLevel === -1) {
-                        displayWidth = Math.min(400, cropWidth);
-                    } else {
-                        displayWidth = Math.round(cropWidth * (zoomLevel / 100));
-                    }
-                    maxDisplayWidth = Math.max(maxDisplayWidth, displayWidth);
-                });
+            // Set grid columns: 1 for row labels + N for each region (auto-sized to content)
+            matrix.style.gridTemplateColumns = `auto repeat(${selections.length}, auto)`;
 
-                // Add padding (20px * 2 = 40px) and some margin for the cell
-                const cellMinWidth = Math.max(200, maxDisplayWidth + 60);
+            // Header row with region names
+            const header = document.createElement('div');
+            header.className = 'matrix-header';
 
-                // Set CSS variable for dynamic grid columns
-                comparisonList.style.setProperty('--cell-min-width', cellMinWidth + 'px');
-            }
+            // Empty cell for top-left corner
+            const cornerCell = document.createElement('div');
+            cornerCell.className = 'matrix-header-cell';
+            header.appendChild(cornerCell);
 
-            // Render each image with all its regions in one cell
+            // Region column headers
+            selections.forEach((sel, idx) => {
+                const headerCell = document.createElement('div');
+                headerCell.className = 'matrix-header-cell';
+                headerCell.textContent = selections.length > 1 ? `Region ${idx + 1}` : '';
+                header.appendChild(headerCell);
+            });
+            matrix.appendChild(header);
+
+            // Data rows - one per visible image
             let prevEV = null;
             images.forEach((imageData, idx) => {
                 if (hiddenImages.has(idx)) return;
+
                 const currentEV = calculateEV(imageData.exif);
-                const item = createComparisonItem(imageData, idx, prevEV, currentEV, selections);
-                comparisonList.appendChild(item);
+                const row = document.createElement('div');
+                row.className = 'matrix-row';
+
+                // Row label (aperture or main differing EXIF value)
+                const rowLabel = document.createElement('div');
+                rowLabel.className = 'matrix-row-label';
+
+                // Find best label - prefer aperture, then shutter, then ISO
+                let labelText = imageData.exif.aperture;
+                if (differingFields.has('aperture')) {
+                    labelText = imageData.exif.aperture;
+                } else if (differingFields.has('shutterSpeed')) {
+                    labelText = imageData.exif.shutterSpeed;
+                } else if (differingFields.has('iso')) {
+                    labelText = imageData.exif.iso;
+                }
+
+                // Hide button (before label)
+                const hideBtn = document.createElement('button');
+                hideBtn.className = 'row-hide-btn';
+                hideBtn.textContent = '×';
+                hideBtn.title = 'Hide this row';
+                hideBtn.addEventListener('click', () => {
+                    hiddenImages.add(idx);
+                    renderComparisons();
+                });
+                rowLabel.appendChild(hideBtn);
+
+                const labelSpan = document.createElement('span');
+                labelSpan.className = 'row-label-text';
+                labelSpan.textContent = labelText;
+                rowLabel.appendChild(labelSpan);
+
+                row.appendChild(rowLabel);
+
+                // Cells for each region
+                selections.forEach((selection, regionIdx) => {
+                    const cell = createMatrixCell(imageData, selection, regionIdx, idx);
+                    row.appendChild(cell);
+                });
+
+                matrix.appendChild(row);
                 if (currentEV !== null) prevEV = currentEV;
             });
+
+            comparisonList.appendChild(matrix);
 
             // Restore scroll position after re-render
             window.scrollTo(0, scrollY);
@@ -1423,110 +1511,58 @@
             return histCanvas;
         }
 
-        function createComparisonItem(imageData, imageIndex, prevEV, currentEV, selectionsArray) {
+        function createMatrixCell(imageData, selection, regionIndex, imageIndex) {
             const { file, img, exif } = imageData;
 
-            // Build comparison item HTML
-            const item = document.createElement('div');
-            item.className = 'comparison-item';
+            // Calculate crop dimensions in actual pixels
+            const cropX = Math.round(selection.x * img.naturalWidth);
+            const cropY = Math.round(selection.y * img.naturalHeight);
+            const cropWidth = Math.round(selection.width * img.naturalWidth);
+            const cropHeight = Math.round(selection.height * img.naturalHeight);
 
-            // Create a crop for each selection region
-            selectionsArray.forEach((selection, regionIndex) => {
-                // Calculate crop dimensions in actual pixels
-                const cropX = Math.round(selection.x * img.naturalWidth);
-                const cropY = Math.round(selection.y * img.naturalHeight);
-                const cropWidth = Math.round(selection.width * img.naturalWidth);
-                const cropHeight = Math.round(selection.height * img.naturalHeight);
+            // Create canvas for cropped region
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
 
-                // Create canvas for cropped region
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-
-                // Determine display size
-                let displayWidth, displayHeight;
-                if (zoomLevel === -1) {
-                    // Fit to container (max 400px width)
-                    const maxWidth = 400;
-                    const scale = Math.min(1, maxWidth / cropWidth);
-                    displayWidth = Math.round(cropWidth * scale);
-                    displayHeight = Math.round(cropHeight * scale);
-                } else {
-                    displayWidth = Math.round(cropWidth * (zoomLevel / 100));
-                    displayHeight = Math.round(cropHeight * (zoomLevel / 100));
-                }
-
-                canvas.width = displayWidth;
-                canvas.height = displayHeight;
-
-                ctx.drawImage(
-                    img,
-                    cropX, cropY, cropWidth, cropHeight,
-                    0, 0, displayWidth, displayHeight
-                );
-
-                // Create histogram overlay
-                const histCanvas = createHistogram(canvas, ctx);
-
-                const cropContainer = document.createElement('div');
-                cropContainer.className = 'crop-container';
-                cropContainer.appendChild(canvas);
-
-                // Add region label if multiple regions
-                if (selectionsArray.length > 1) {
-                    const regionLabel = document.createElement('div');
-                    regionLabel.className = 'region-indicator region-' + (regionIndex + 1);
-                    regionLabel.textContent = 'R' + (regionIndex + 1);
-                    cropContainer.appendChild(regionLabel);
-                }
-
-                // Add histogram overlay
-                const histDiv = document.createElement('div');
-                histDiv.className = 'histogram';
-                histDiv.appendChild(histCanvas);
-                cropContainer.appendChild(histDiv);
-
-                item.appendChild(cropContainer);
-            });
-
-            const infoDiv = document.createElement('div');
-            infoDiv.className = 'image-info';
-
-            // Build EXIF grid with only differing values
-            let exifHtml = '';
-            for (const field of exifFields) {
-                if (differingFields.has(field.key)) {
-                    exifHtml += `<span class="exif-label">${field.label}:</span><span class="exif-value">${exif[field.key]}</span>`;
-                }
+            // Determine display size
+            let displayWidth, displayHeight;
+            if (zoomLevel === -1) {
+                const maxWidth = 400;
+                const scale = Math.min(1, maxWidth / cropWidth);
+                displayWidth = Math.round(cropWidth * scale);
+                displayHeight = Math.round(cropHeight * scale);
+            } else {
+                displayWidth = Math.round(cropWidth * (zoomLevel / 100));
+                displayHeight = Math.round(cropHeight * (zoomLevel / 100));
             }
 
-            // Calculate EV difference from previous visible image
-            // Lower EV = brighter image, so we invert for intuitive display (+ = brighter)
-            let evDiffHtml = '';
-            if (prevEV !== null && currentEV !== null) {
-                const evDiff = prevEV - currentEV; // Inverted: positive = brighter
-                const sign = evDiff > 0 ? '+' : '';
-                const evClass = evDiff > 0.01 ? 'positive' : (evDiff < -0.01 ? 'negative' : 'neutral');
-                evDiffHtml = `<span class="ev-diff ${evClass}">${sign}${evDiff.toFixed(2)} EV</span>`;
-            }
+            canvas.width = displayWidth;
+            canvas.height = displayHeight;
 
-            infoDiv.innerHTML = `
-                <div class="image-header">
-                    <span class="image-filename">${file.name}</span>${evDiffHtml}
-                    <button class="hide-btn" data-index="${imageIndex}">Hide</button>
-                </div>
-                ${exifHtml ? `<div class="exif-grid">${exifHtml}</div>` : ''}
-            `;
+            ctx.drawImage(
+                img,
+                cropX, cropY, cropWidth, cropHeight,
+                0, 0, displayWidth, displayHeight
+            );
 
-            // Add hide button event listener
-            const hideBtn = infoDiv.querySelector('.hide-btn');
-            hideBtn.addEventListener('click', () => {
-                hiddenImages.add(imageIndex);
-                renderComparisons();
-            });
+            // Create cell
+            const cell = document.createElement('div');
+            cell.className = 'matrix-cell';
 
-            item.appendChild(infoDiv);
+            const cropContainer = document.createElement('div');
+            cropContainer.className = 'crop-container';
+            cropContainer.appendChild(canvas);
 
-            return item;
+            // Add histogram overlay
+            const histCanvas = createHistogram(canvas, ctx);
+            const histDiv = document.createElement('div');
+            histDiv.className = 'histogram';
+            histDiv.appendChild(histCanvas);
+            cropContainer.appendChild(histDiv);
+
+            cell.appendChild(cropContainer);
+
+            return cell;
         }
 
         // Handle window resize - update selection boxes position
